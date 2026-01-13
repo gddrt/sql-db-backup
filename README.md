@@ -1,5 +1,5 @@
 # DB Backup
-For dumping MySQL/MariaDB databases to a DigitalOcean Spaces bucket.
+For dumping MySQL databases to a DigitalOcean Spaces (or any) bucket.
 
 ## Compatibility
 The dump script uses the `--single-transaction` flag to create a consistent backup without locking the DB. This only works on InnoDB.
@@ -35,5 +35,11 @@ We're using an S3 bucket for storage. If you are not careful, it is possible to 
 9. Ensure mysqldump is available (`which mysqldump`). If it is not you will need to install mysql-server.
 10. Now that configuration is done, set up a cron job for `backup.sh` to run.
 
+## Recovering Backup
+1. Find the latest backup in your bucket file explorer.
+2. From your server, run `s3cmd get <s3 url> <output file>`. The s3 url looks like `s3://BUCKET_NAME/FILEPATH`. Decryption is automatic using your stored s3cmd config (if you're recovering from another machine you'll have to set the encryption password first).
+3. Decompress it `gzip -d <file>`
+4. mysqldumps are just a big ol list of queries. Plop that in your database. `mysql [connection params] < [dump file]`. **Note:** The database you are restoring should not already exist. Also, the dump will not create the database user, you'll have to configure that yourself.
+
 ## Performance
-It takes about 1 minute per 150MB of database to run. YMMV.
+It takes about 1 minute per 1.5GB of raw database to create and upload the dump. YMMV.
