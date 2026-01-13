@@ -4,6 +4,8 @@ For dumping MySQL databases to a DigitalOcean Spaces (or any) bucket.
 ## Compatibility
 The dump script uses the `--single-transaction` flag to create a consistent backup without locking the DB. This only works on InnoDB.
 
+The script also assumes you want to dump a single database from your server. If you want to dump all of them, modify the script to use mysqldump with the [--databases or --all-databases options.](https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html#option_mysqldump_all-databases)
+
 ## Warning!
 We're using an S3 bucket for storage. If you are not careful, it is possible to expose data in buckets. You **must** ensure **all** of these precautions are taken.
 1. Disable publicly listing file contents on the bucket. This should be the default setting. This does not make files private, it only prevents listing them.
@@ -39,7 +41,11 @@ We're using an S3 bucket for storage. If you are not careful, it is possible to 
 1. Find the latest backup in your bucket file explorer.
 2. From your server, run `s3cmd get <s3 url> <output file>`. The s3 url looks like `s3://BUCKET_NAME/FILEPATH`. Decryption is automatic using your stored s3cmd config (if you're recovering from another machine you'll have to set the encryption password first).
 3. Decompress it `gzip -d <file>`
-4. mysqldumps are just a big ol list of queries. Plop that in your database. `mysql [connection params] < [dump file]`. **Note:** The database you are restoring should not already exist. Also, the dump will not create the database user, you'll have to configure that yourself.
+4. mysqldumps are just a big ol list of queries. Plop that in your database. `mysql [connection params] < [dump file]`.
+
+**Note:** You should restore to an empty database. Create a new database, and then pass the database name in your mysql params with `-D database_name`. Also, the dump will not create the database user, you'll have to configure that yourself.
+
+If you did not dump a single database, then you do not need to create databases; the create queries are included.
 
 ## Performance
 It takes about 1 minute per 1.5GB of raw database to create and upload the dump. YMMV.
